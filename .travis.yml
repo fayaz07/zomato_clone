@@ -14,7 +14,7 @@ before_script:
   - export ANDROID_SDK_ROOT=/home/$USER/Android/Sdk
   - export ANDROID_HOME=/home/$USER/Android/Sdk
   - export PATH=${PATH}:$ANDROID_HOME/tools:$ANDROID_HOME/platform-tools
-  - export JAVA_HOME=/usr/lib/jvm/java-8-oracle
+  - export JAVA_HOME=/usr/lib/jvm/java-8-openjdk/
   - git clone https://github.com/flutter/flutter.git -b stable
   - ./flutter/bin/flutter doctor
 script:
