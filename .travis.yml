@@ -8,13 +8,17 @@ addons:
       - ubuntu-toolchain-r-test # if we don't specify this, the libstdc++6 we get is the wrong version
     packages:
       - libstdc++6
-      - default-jdk
+      - oracle-java8-installer
+      - oracle-java8-set-default
       - android-sdk
 before_script:
+  - export ANDROID_SDK_ROOT=/home/$USER/Android/Sdk
+  - export ANDROID_HOME=/home/$USER/Android/Sdk
+  - export PATH=${PATH}:$ANDROID_HOME/tools:$ANDROID_HOME/platform-tools
+  - export JAVA_HOME=/usr/lib/jvm/java-8-oracle
   - git clone https://github.com/flutter/flutter.git -b stable
   - ./flutter/bin/flutter doctor
 script:
-  - export ANDROID_SDK_ROOT=/home/$USER/Android/Sdk
   - ./flutter/bin/flutter build apk
 cache:
   directories:
