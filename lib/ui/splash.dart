@@ -4,11 +4,15 @@ import 'package:flutter/rendering.dart';
 import 'package:zomato_clone/utils/constants.dart';
 
 List<String> scrollingFoodItems = [
-  'assets/images/food1.jpeg',
+  'assets/images/food1.png',
   'assets/images/food2.png',
-  'assets/images/food3.jpeg',
+  'assets/images/food3.png',
   'assets/images/food4.png',
-  'assets/images/food5.png'
+  'assets/images/food5.png',
+  'assets/images/food6.png',
+  'assets/images/food7.png',
+  'assets/images/food8.png',
+  'assets/images/food9.png',
 ];
 
 class Splash extends StatefulWidget {
@@ -25,7 +29,11 @@ class _SplashState extends State<Splash> with SingleTickerProviderStateMixin {
 
   @override
   void initState() {
-    var duration = 2 * scrollingFoodItems.length;
+    super.initState();
+  }
+
+  void startScrollAnimation(Duration dur){
+        var duration = 2 * scrollingFoodItems.length;
 
     Future.delayed(Duration(milliseconds: 1000)).whenComplete(() {
       print(controller.position.maxScrollExtent);
@@ -43,17 +51,22 @@ class _SplashState extends State<Splash> with SingleTickerProviderStateMixin {
 
       scrollingAnimation.addListener(() {
         controller.animateTo(scrollingAnimation.value,
-            duration: Duration(milliseconds: 300), curve: Curves.linear);
+            duration: Duration(milliseconds: 200), curve: Curves.linear);
       });
     });
-
-    super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
     height = MediaQuery.of(context).size.height;
     width = MediaQuery.of(context).size.width;
+    
+    //After the widget is rendered, waiting for 1000 ms and starting the anim
+    WidgetsBinding.instance.addPostFrameCallback(
+      (Duration d){
+        startScrollAnimation(d);
+      }
+    );
 
     return Scaffold(
       body: SafeArea(
@@ -62,7 +75,7 @@ class _SplashState extends State<Splash> with SingleTickerProviderStateMixin {
             getSkipButton(),
             SizedBox(height: 20.0),
             getZomatoText(),
-            SizedBox(height: 20.0),
+            SizedBox(height: 30.0),
             Expanded(child: getScrollView()),
             SizedBox(height: 40.0),
 
@@ -126,7 +139,7 @@ class _SplashState extends State<Splash> with SingleTickerProviderStateMixin {
               style: TextStyle(
                 color: Colors.black.withOpacity(0.75),
                 fontFamily: 'source-sans-pro.light',
-                fontSize: height * 0.25 / 10,
+                fontSize: height * 0.23 / 10,
               ),
             ),
             color: Colors.white,
@@ -149,16 +162,20 @@ class _SplashState extends State<Splash> with SingleTickerProviderStateMixin {
 
   Widget getScrollView() => SingleChildScrollView(
         controller: controller,
-        physics: NeverScrollableScrollPhysics(),
+        physics: BouncingScrollPhysics(),
         scrollDirection: Axis.horizontal,
         child: Row(
             mainAxisSize: MainAxisSize.min,
             children:
                 List<Widget>.generate(scrollingFoodItems.length, (int index) {
               return SizedBox(
-                child: Image.asset(
-                  scrollingFoodItems[index],
-                  fit: BoxFit.fill,
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Image.asset(
+                    scrollingFoodItems[index],
+                    fit: BoxFit.fill,
+                    scale: 0.5,
+                  ),
                 ),
               );
             })),
@@ -179,7 +196,7 @@ class _SplashState extends State<Splash> with SingleTickerProviderStateMixin {
               children: <Widget>[
                 SizedBox(width: 2.0),
                 SizedBox(
-                    height: height * 0.35 / 10,
+                    height: height * 0.30 / 10,
                     child: Image.asset(
                       image,
                       fit: BoxFit.fill,
@@ -187,7 +204,7 @@ class _SplashState extends State<Splash> with SingleTickerProviderStateMixin {
                 SizedBox(width: 10.0),
                 Text(text,
                     style: TextStyle(
-                        fontSize: height * 0.27 / 10,
+                        fontSize: height * 0.25 / 10,
                         fontFamily: 'source-sans-pro.semibold',
                         fontWeight: FontWeight.w400))
               ],
