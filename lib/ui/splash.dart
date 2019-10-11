@@ -1,7 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/widgets.dart';
 import 'package:zomato_clone/utils/constants.dart';
+import 'package:zomato_clone/utils/platform_widgets.dart';
+
+import 'select_location.dart';
 
 List<String> scrollingFoodItems = [
   'assets/images/food1.png',
@@ -32,8 +36,14 @@ class _SplashState extends State<Splash> with SingleTickerProviderStateMixin {
     super.initState();
   }
 
+  @override
+  void dispose() {
+    scrollAnimController.dispose();
+    super.dispose();
+  }
+
   void startScrollAnimation(Duration dur){
-        var duration = 2 * scrollingFoodItems.length;
+        var duration = 3 * scrollingFoodItems.length;
 
     Future.delayed(Duration(milliseconds: 1000)).whenComplete(() {
       print(controller.position.maxScrollExtent);
@@ -92,7 +102,8 @@ class _SplashState extends State<Splash> with SingleTickerProviderStateMixin {
             SizedBox(height: 20.0),
 
             //Terms and conditions section
-            Text('By continuing, you agree to our'),
+            Text('By continuing, you agree to our', style: TextStyle(
+                fontSize: 10.0)),
             SizedBox(height: 3.0),
             Row(
               mainAxisSize: MainAxisSize.min,
@@ -101,7 +112,7 @@ class _SplashState extends State<Splash> with SingleTickerProviderStateMixin {
                 InkWell(
                   child: Text('Terms of Service',
                       style: TextStyle(
-                          fontSize: 12.0,
+                          fontSize: 10.0,
                           decoration: TextDecoration.underline)),
                   onTap: () {},
                 ),
@@ -109,14 +120,14 @@ class _SplashState extends State<Splash> with SingleTickerProviderStateMixin {
                 InkWell(
                   child: Text('Privacy Policy',
                       style: TextStyle(
-                          fontSize: 12.0,
+                          fontSize: 10.0,
                           decoration: TextDecoration.underline)),
                 ),
                 SizedBox(width: 5.0),
                 InkWell(
                   child: Text('Content Policy',
                       style: TextStyle(
-                          fontSize: 12.0,
+                          fontSize: 10.0,
                           decoration: TextDecoration.underline)),
                 ),
               ],
@@ -133,13 +144,16 @@ class _SplashState extends State<Splash> with SingleTickerProviderStateMixin {
         child: Align(
           alignment: Alignment.centerRight,
           child: MaterialButton(
-            onPressed: () {},
+            onPressed: () {
+              Navigator.of(context).pushReplacement(PlatformSpecific.route(SelectLocation()));
+            },
             child: Text(
               'Skip',
               style: TextStyle(
-                color: Colors.black.withOpacity(0.75),
-                fontFamily: 'source-sans-pro.light',
-                fontSize: height * 0.23 / 10,
+                color: Colors.black.withOpacity(0.5),
+                fontSize: height * 0.2 / 10,
+                fontFamily: 'OpenSans-Bold',
+                fontWeight: FontWeight.w600
               ),
             ),
             color: Colors.white,
@@ -153,10 +167,9 @@ class _SplashState extends State<Splash> with SingleTickerProviderStateMixin {
         'zomato',
         style: TextStyle(
           color: Colors.red,
-          fontSize: height * 0.7 / 10,
+          fontSize: height * 0.6 / 10,
           fontStyle: FontStyle.italic,
           fontWeight: FontWeight.w900,
-          fontFamily: 'source-sans-pro.bold-italic',
         ),
       );
 
@@ -184,10 +197,10 @@ class _SplashState extends State<Splash> with SingleTickerProviderStateMixin {
   Widget getSocialMediaButton(
           {String image, String text, Function onPressed}) =>
       MaterialButton(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0),  side: BorderSide(color: Colors.grey,width: 0.5,style: BorderStyle.solid)),
         color: Colors.white,
         onPressed: () {},
-        elevation: 4.0,
+        elevation: 1.0,
         child: SizedBox(
           width: width * 0.8,
           child: Padding(
@@ -200,13 +213,14 @@ class _SplashState extends State<Splash> with SingleTickerProviderStateMixin {
                     child: Image.asset(
                       image,
                       fit: BoxFit.fill,
-                    )),
-                SizedBox(width: 10.0),
+                    ),
+                ),
+                SizedBox(width: 15.0),
                 Text(text,
                     style: TextStyle(
-                        fontSize: height * 0.25 / 10,
-                        fontFamily: 'source-sans-pro.semibold',
-                        fontWeight: FontWeight.w400))
+                        fontSize: height * 0.2 / 10,
+                        fontWeight: FontWeight.w500),
+                )
               ],
             ),
           ),

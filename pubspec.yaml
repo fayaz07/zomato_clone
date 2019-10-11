@@ -23,6 +23,8 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^0.1.2
+  location: ^2.3.5
+  http: ^0.12.0+2
 
 dev_dependencies:
   flutter_test:
@@ -58,13 +60,11 @@ flutter:
   # list giving the asset and other descriptors for the font. For
   # example:
   fonts:
-    - family: SourceSansPro
+    - family: OpenSans
       fonts:
-         - asset: assets/fonts/source-sans-pro.regular.ttf
-         - asset: assets/fonts/source-sans-pro.bold.ttf
-         - asset: assets/fonts/source-sans-pro.semibold.ttf
-         - asset: assets/fonts/source-sans-pro.bold-italic.ttf
-         - asset: assets/fonts/source-sans-pro.light.ttf
+         - asset: assets/fonts/OpenSans-Regular.ttf
+         - asset: assets/fonts/OpenSans-Bold.ttf
+
            #style: normal
 
   #   - family: Trajan Pro

@@ -8,7 +8,7 @@ class ZomatoClone extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Splash(),
-      theme: ThemeData(fontFamily: 'SourceSansPro'),
+      theme: ThemeData(fontFamily: 'OpenSans'),
       debugShowCheckedModeBanner: false,
     );
   }
