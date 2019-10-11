@@ -17,5 +17,5 @@ class Labels{
 }
 
 class Keys{
-  static String placesAPIKey = "AIzaSyBojlyCpuIxwyAk_Lp7eGtjwP6kOaSCNBY";
+  static String placesAPIKey = "";
 }

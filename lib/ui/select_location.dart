@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:zomato_clone/bloc/places_bloc.dart';
+import 'package:zomato_clone/utils/api_requests.dart';
 import 'package:zomato_clone/utils/constants.dart';
 import 'package:zomato_clone/utils/platform_widgets.dart';
 import 'package:location/location.dart';
+import 'package:zomato_clone/utils/session_data.dart';
+
+import '../utils/data_models.dart';
 
 void main() {
   runApp(MaterialApp(home: SelectLocation()));
@@ -13,6 +19,8 @@ class SelectLocation extends StatefulWidget {
 }
 
 class _SelectLocationState extends State<SelectLocation> {
+  PersistentBottomSheetController _controller;
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
 
   double _height, _width;
 
@@ -22,76 +30,95 @@ class _SelectLocationState extends State<SelectLocation> {
   bool hasLocationPermission;
   LocationData currLocation;
 
+  Widget placesAutoComplete = SizedBox();
+
+  TextEditingController searchLocationController = TextEditingController();
+
   @override
   void initState() {
-    //Requesting for permissions initially
-    requestLocationPermissions();
     super.initState();
   }
 
-  void requestLocationPermissions() async {
-
-//    Map<PermissionGroup, PermissionStatus> permissions =
-//        await PermissionHandler()
-//            .requestPermissions([PermissionGroup.locationWhenInUse]);
-
-    //if (permissions[PermissionGroup.location] == PermissionStatus.granted) {
+  void checkForPermissions() async {
     hasLocationPermission = await location.hasPermission();
-    if(hasLocationPermission){
-
+    if (hasLocationPermission) {
       currLocation = await location.getLocation();
-      print(currLocation.latitude);
-      print(currLocation.longitude);
-
+      print(
+          "Current latlong: ${currLocation.latitude}, ${currLocation.longitude}");
     } else {
-      PlatformSpecific.alertDialog(
-        context: context,
-        actions: <Widget>[
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: InkWell(
-              child: Text('I\'M SURE', style: TextStyle(color: Colors.pink)),
-              onTap: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: InkWell(
-              child: Text('RETRY', style: TextStyle(color: Colors.pink)),
-              onTap: () {
-                Navigator.of(context).pop();
-                Future.delayed(Duration(milliseconds: 100)).whenComplete(() {
-                  requestLocationPermissions();
-                });
-              },
-            ),
-          )
-        ],
-        content: Text(Labels.permissionDeniedContent),
-        title: Text(Labels.permissionDeniedTitle),
-      );
+      requestLocationAccessPermission().then((permission) {
+        if (permission)
+          checkForPermissions();
+        else
+          showNoLocationPermissionDialog();
+      });
     }
   }
+
+  Future<bool> requestLocationAccessPermission() async {
+    return location.requestPermission();
+  }
+
+  void showNoLocationPermissionDialog() {
+    PlatformSpecific.alertDialog(
+      context: context,
+      actions: <Widget>[
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: InkWell(
+            child: Text('I\'M SURE', style: TextStyle(color: Colors.pink)),
+            onTap: () {
+              Navigator.of(context).pop();
+            },
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: InkWell(
+            child: Text('RETRY', style: TextStyle(color: Colors.pink)),
+            onTap: () {
+              Navigator.of(context).pop();
+              Future.delayed(Duration(milliseconds: 100)).whenComplete(() {
+                requestLocationAccessPermission().whenComplete(() {
+                  checkForPermissions();
+                });
+              });
+            },
+          ),
+        )
+      ],
+      content: Text(Labels.permissionDeniedContent),
+      title: Text(Labels.permissionDeniedTitle),
+    );
+  }
+
+  PlacesBloc placesBloc;
 
   @override
   Widget build(BuildContext context) {
     _width = MediaQuery.of(context).size.width;
     _height = MediaQuery.of(context).size.height;
 
-    return SafeArea(
-      child: Scaffold(
-        body: _getBody(),
-        bottomSheet: Container(
-          padding: const EdgeInsets.only(
-              top: 8.0, bottom: 15.0, left: 8.0, right: 8.0),
-          child: Text(
-            Labels.improveUserExp,
-            textAlign: TextAlign.center,
-            style:
-                TextStyle(fontSize: 14.0, color: Colors.black.withOpacity(0.8)),
-          ),
+    placesBloc = Provider.of<PlacesBloc>(context);
+
+    WidgetsBinding.instance.addPostFrameCallback((Duration d) {
+      //Checking and requesting for location permissions initially
+      checkForPermissions();
+    });
+
+    return Scaffold(
+      key: _scaffoldKey,
+      body: SafeArea(
+        child: _getBody(),
+      ),
+      bottomSheet: Container(
+        padding: const EdgeInsets.only(
+            top: 8.0, bottom: 15.0, left: 8.0, right: 8.0),
+        child: Text(
+          Labels.improveUserExp,
+          textAlign: TextAlign.center,
+          style:
+              TextStyle(fontSize: 14.0, color: Colors.black.withOpacity(0.8)),
         ),
       ),
     );
@@ -143,11 +170,26 @@ class _SelectLocationState extends State<SelectLocation> {
         ),
       );
 
-  void selectLocationManually() {
-    PlatformSpecific.bottomSheet(
+  BuildContext bottomSheetContext;
+
+  void selectLocationManually() async {
+    showModalBottomSheet(
+        useRootNavigator: true,
         context: context,
+        isScrollControlled: true,
+        builder: (BuildContext context) {
+          bottomSheetContext = context;
+          return bottomSheetBody();
+        });
+
+    searchLocationController.addListener(searchLocationListener);
+  }
+
+  FocusNode focusNode = FocusNode();
+
+  Widget bottomSheetBody() => FractionallySizedBox(
+        heightFactor: 0.8,
         child: Column(
-          mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             //Search bar
             Padding(
@@ -186,6 +228,8 @@ class _SelectLocationState extends State<SelectLocation> {
                   expands: false,
                   autofocus: false,
                   maxLines: 1,
+                  focusNode: focusNode,
+                  controller: searchLocationController,
                   decoration: InputDecoration(
                       contentPadding: const EdgeInsets.only(top: 8.0),
                       prefixIcon: Icon(
@@ -227,7 +271,8 @@ class _SelectLocationState extends State<SelectLocation> {
             ),
 
             Padding(
-              padding: const EdgeInsets.only(left: 8.0, right: 8.0),
+              padding:
+                  const EdgeInsets.only(left: 8.0, right: 8.0, bottom: 10.0),
               child: Divider(
                 thickness: 0.3,
                 height: 1.0,
@@ -236,24 +281,104 @@ class _SelectLocationState extends State<SelectLocation> {
             ),
 
             Expanded(
-              child: SizedBox(),
-            )
+              child: ListView.builder(
+                  itemCount: placesBloc.places.length,
+                  itemBuilder: (BuildContext context, int i) {
+                    return placeItem(placesBloc.places[i]);
+                  }),
+            ),
+
+//            Expanded(
+//              child: placesAutoComplete,
+//            ),
+            SizedBox(height: 20.0),
           ],
-        ));
+        ),
+      );
+
+  void searchLocationListener() {
+    String location = searchLocationController.text;
+    //print(location);
+    if (location.length >= 3 && location.length <= 5) {
+      ApiRequests.getNearbyPlaces(location, placesBloc).whenComplete(() {
+        print("Searched ${SessionData.places.length}");
+
+        focusNode.unfocus();
+        Future.delayed(Duration(milliseconds: 100)).whenComplete((){
+          focusNode.requestFocus();
+        });
+
+//        if (SessionData.places.length != 0) {
+//          _scaffoldKey.currentState.setState(() {
+//            placesAutoComplete = ListView.builder(
+//                itemCount: SessionData.places.length,
+//                physics: BouncingScrollPhysics(),
+//                itemBuilder: (BuildContext context, int i) {
+//                  return placeItem(SessionData.places[i]);
+//                });
+//          });
+//          print("Widget build finished");
+//        }
+      });
+    } else if (location.length >= 7) {
+      print("location too long to search");
+    }
   }
 
-  void selectCurrentLocation() async {
+  Widget placeItem(PlacesModel place) => InkWell(
+        onTap: () {},
+        child: Row(
+          mainAxisSize: MainAxisSize.max,
+          children: <Widget>[
+            SizedBox(width: 15.0),
+            Icon(Icons.location_on, color: Colors.grey),
+            SizedBox(width: 10.0),
+            Wrap(
+              runAlignment: WrapAlignment.start,
+              direction: Axis.vertical,
+              children: <Widget>[
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    SizedBox(width: 10.0),
+                    Text(place.main_text.trim(),
+                        style: TextStyle(
+                            color: Colors.black,
+                            fontSize: 16.0,
+                            fontWeight: FontWeight.w700)),
+                  ],
+                ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    SizedBox(width: 10.0),
+                    Text(place.secondary_text.trim(),
+                        style: TextStyle(
+                            color: Colors.grey,
+                            fontSize: 14.0,
+                            fontWeight: FontWeight.w400)),
+                  ],
+                ),
+                Divider(
+                  height: 5.0,
+                  color: Colors.black,
+                )
+              ],
+            )
+          ],
+        ),
+      );
 
-    if(hasLocationPermission){      
+  void selectCurrentLocation() async {
+    if (hasLocationPermission) {
       currLocation = await location.getLocation();
       print(currLocation.latitude);
       print(currLocation.longitude);
-    }
-    else{
+    } else {
       showSearchingIndicator();
       print('Requesting permissions');
-      await location.requestPermission().then((value){
-        if(value) {
+      await location.requestPermission().then((value) {
+        if (value) {
           location.getLocation().then((LocationData ld) {
             print('Location : ${ld.latitude} ${ld.longitude}');
           });
@@ -275,5 +400,41 @@ class _SelectLocationState extends State<SelectLocation> {
         ),
       );
     });
+  }
+
+  void hideSearchingIndicator() {
+    setState(() {
+      _searchSuffix = InkWell(child: SizedBox(width: 25.0));
+    });
+  }
+
+  void showClearIndicator() {
+    setState(() {
+      _searchSuffix = InkWell(
+        onTap: () {},
+        child: SizedBox(
+          width: 40.0,
+          child: Padding(
+            padding: const EdgeInsets.only(
+                top: 12.0, bottom: 14.0, left: 18.0, right: 18.0),
+            child: Icon(Icons.clear),
+          ),
+        ),
+      );
+    });
+  }
+
+  void hideClearIndicator() {
+    setState(() {
+      _searchSuffix = InkWell(child: SizedBox(width: 25.0));
+    });
+  }
+
+  @override
+  void dispose() {
+    placesBloc.dispose();
+    searchLocationController.dispose();
+
+    super.dispose();
   }
 }
