@@ -3,9 +3,12 @@ class Values{
   static double buttonTextFontSize = 18.0;
 }
 
-class Labels{
-
+class MyFonts{
   static String SourceSansFont = "SourceSansPro";
+  static String openSansBold = "OpenSans-Bold";
+}
+
+class Labels{
   
   static String hiUser = 'Hi, nice to meet you!';
   static String setLocation = "Set your location to start exploring\nrestaurants around you";
